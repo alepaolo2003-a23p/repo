@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Botiquín de Emergencia para Sonrisas 🚨</title>
+
+<!-- Bootstrap 5 -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<!-- Fuentes: Fredoka (display, redondeada y tierna) + Nunito (cuerpo, cálida) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<!-- canvas-confetti -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+<style>
+  :root{
+    --pink: #ffc9e3;
+    --pink-deep: #ff9fce;
+    --purple: #d9c6ff;
+    --purple-deep: #b794f6;
+    --blue: #c2ecff;
+    --blue-deep: #9fdcff;
+    --ink: #221f2b;
+    --glass: rgba(255,255,255,0.35);
+    --glass-border: rgba(255,255,255,0.55);
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    min-height: 100%;
+  }
+
+  body{
+    font-family: 'Nunito', sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(circle at 15% 20%, var(--pink) 0%, transparent 45%),
+      radial-gradient(circle at 85% 15%, var(--blue) 0%, transparent 45%),
+      radial-gradient(circle at 50% 90%, var(--purple) 0%, transparent 50%),
+      linear-gradient(160deg, #fff5fb 0%, #f3edff 45%, #eef8ff 100%);
+    background-attachment: fixed;
+    overflow-x: hidden;
+    min-height: 100vh;
+    position: relative;
+  }
+
+  /* burbujas ambientales flotando */
+  .bubble{
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(2px);
+    opacity: 0.5;
+    z-index: 0;
+    animation: float 12s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes float{
+    0%, 100% { transform: translateY(0) translateX(0); }
+    50% { transform: translateY(-30px) translateX(15px); }
+  }
+
+  h1, h2, h3, .display-font{
+    font-family: 'Fredoka', sans-serif;
+  }
+
+  /* ---------- PANTALLA INICIAL ---------- */
+  #hero{
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem 1.2rem;
+    position: relative;
+    z-index: 2;
+    transition: opacity 0.6s ease, transform 0.6s ease, visibility 0.6s;
+  }
+
+  #hero.hide{
+    opacity: 0;
+    transform: scale(0.92);
+    visibility: hidden;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .eyebrow{
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    color: var(--purple-deep);
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    padding: 0.4rem 1rem;
+    border-radius: 100px;
+    backdrop-filter: blur(8px);
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-title{
+    font-size: clamp(2.4rem, 7vw, 5rem);
+    font-weight: 700;
+    line-height: 1.05;
+    margin-bottom: 1rem;
+    background: linear-gradient(100deg, var(--purple-deep), var(--pink-deep) 55%, var(--blue-deep));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .hero-sub{
+    max-width: 560px;
+    font-size: 1.15rem;
+    color: #4a4458;
+    margin-bottom: 2.5rem;
+  }
+
+  .btn-open{
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 600;
+    font-size: 1.2rem;
+    color: #fff;
+    background: linear-gradient(120deg, var(--purple-deep), var(--pink-deep));
+    border: none;
+    padding: 1rem 2.4rem;
+    border-radius: 100px;
+    box-shadow: 0 8px 30px rgba(216, 130, 190, 0.45);
+    animation: pulse 2.2s ease-in-out infinite;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .btn-open:hover{
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 0 14px 34px rgba(183, 148, 246, 0.55);
+    color: #fff;
+  }
+  @keyframes pulse{
+    0%, 100% { box-shadow: 0 8px 30px rgba(216, 130, 190, 0.45); }
+    50% { box-shadow: 0 8px 44px rgba(183, 148, 246, 0.65); }
+  }
+
+  /* ---------- BOTIQUÍN (CARDS) ---------- */
+  #botiquin{
+    display: none;
+    position: relative;
+    z-index: 2;
+    padding: 3.5rem 1rem 5rem;
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  #botiquin.show{
+    display: block;
+  }
+  #botiquin.reveal{
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .botiquin-title{
+    text-align: center;
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    margin-bottom: 0.4rem;
+    color: var(--ink);
+  }
+  .botiquin-sub{
+    text-align: center;
+    color: #5c5468;
+    margin-bottom: 3rem;
+  }
+
+  .glass-card{
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 26px;
+    padding: 1.8rem 1.6rem 2.1rem;
+    height: 100%;
+    box-shadow: 0 10px 40px rgba(120, 90, 160, 0.15);
+    transition: transform 0.35s ease, box-shadow 0.35s ease;
+    display: flex;
+    flex-direction: column;
+  }
+  .glass-card:hover{
+    transform: translateY(-8px);
+    box-shadow: 0 18px 50px rgba(120, 90, 160, 0.25);
+  }
+
+  .card-tag{
+    display: inline-block;
+    align-self: flex-start;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.3rem 0.8rem;
+    border-radius: 100px;
+    margin-bottom: 0.9rem;
+  }
+  .tag-mika{ background: var(--pink); color: #a2306f; }
+  .tag-pollo{ background: var(--blue); color: #1c6f8c; }
+  .tag-te{ background: var(--purple); color: #6b3fa0; }
+
+  .glass-card h3{
+    font-size: 1.35rem;
+    margin-bottom: 0.6rem;
+  }
+  .glass-card p{
+    color: #4a4458;
+    font-size: 0.98rem;
+    margin-bottom: 1.2rem;
+  }
+
+  /* Card Mika */
+  .mika-frame{
+    width: 100%;
+    aspect-ratio: 4/3;
+    border-radius: 18px;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--pink), var(--purple));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.1rem;
+    border: 2px dashed rgba(255,255,255,0.7);
+  }
+  .mika-frame img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .btn-mika{
+    font-family: 'Fredoka', sans-serif;
+    background: var(--pink-deep);
+    border: none;
+    color: #fff;
+    font-weight: 600;
+    border-radius: 100px;
+    padding: 0.6rem 1.2rem;
+    margin-top: auto;
+    transition: transform 0.2s ease;
+  }
+  .btn-mika:hover{ transform: scale(1.05); color: #fff; }
+
+  /* Card Pollo */
+  .pollo-stage{
+    width: 100%;
+    aspect-ratio: 4/3;
+    border-radius: 18px;
+    background: linear-gradient(135deg, var(--blue), #eaf7ff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.1rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .bouquet{
+    font-size: 2.6rem;
+    display: flex;
+    gap: 0.1rem;
+    animation: sway 3.2s ease-in-out infinite;
+    transform-origin: bottom center;
+  }
+  .bouquet span{ display: inline-block; }
+  .bouquet span:nth-child(1){ animation: bob 2.6s ease-in-out infinite; }
+  .bouquet span:nth-child(2){ animation: bob 2.6s ease-in-out infinite 0.2s; }
+  .bouquet span:nth-child(3){ animation: bob 2.6s ease-in-out infinite 0.4s; }
+  .bouquet span:nth-child(4){ animation: bob 2.6s ease-in-out infinite 0.6s; }
+  @keyframes bob{
+    0%, 100% { transform: translateY(0) rotate(-4deg); }
+    50% { transform: translateY(-8px) rotate(4deg); }
+  }
+  @keyframes sway{
+    0%, 100% { transform: rotate(-3deg); }
+    50% { transform: rotate(3deg); }
+  }
+  .pollo-stage.bitten .bouquet{
+    animation: shake 0.5s ease;
+  }
+  @keyframes shake{
+    0%, 100% { transform: translateX(0) rotate(0); }
+    20% { transform: translateX(-8px) rotate(-6deg); }
+    40% { transform: translateX(8px) rotate(6deg); }
+    60% { transform: translateX(-6px) rotate(-4deg); }
+    80% { transform: translateX(6px) rotate(4deg); }
+  }
+  .nom-pop{
+    position: absolute;
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 700;
+    font-size: 1.4rem;
+    color: #ff6fa5;
+    opacity: 0;
+    top: 15%;
+    text-shadow: 0 2px 8px rgba(255,255,255,0.8);
+  }
+  .nom-pop.pop{
+    animation: nomPop 0.9s ease forwards;
+  }
+  @keyframes nomPop{
+    0% { opacity: 0; transform: translateY(10px) scale(0.7); }
+    30% { opacity: 1; transform: translateY(-6px) scale(1.15); }
+    70% { opacity: 1; transform: translateY(-14px) scale(1); }
+    100% { opacity: 0; transform: translateY(-28px) scale(0.9); }
+  }
+
+  .btn-pollo{
+    font-family: 'Fredoka', sans-serif;
+    background: var(--blue-deep);
+    border: none;
+    color: #12475c;
+    font-weight: 600;
+    border-radius: 100px;
+    padding: 0.6rem 1.2rem;
+    margin-top: auto;
+    transition: transform 0.2s ease;
+  }
+  .btn-pollo:hover{ transform: scale(1.05); }
+
+  /* Card Té */
+  .te-stage{
+    width: 100%;
+    aspect-ratio: 4/3;
+    border-radius: 18px;
+    background: linear-gradient(135deg, var(--purple), #f3ecff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.1rem;
+    font-size: 3.2rem;
+    position: relative;
+  }
+  .te-stage .steam{
+    position: absolute;
+    top: 18%;
+    font-size: 1.4rem;
+    opacity: 0.7;
+    animation: steam 2.4s ease-in-out infinite;
+  }
+  @keyframes steam{
+    0%, 100% { transform: translateY(0); opacity: 0.5; }
+    50% { transform: translateY(-10px); opacity: 0.9; }
+  }
+  .te-note{
+    font-style: italic;
+    font-size: 0.9rem;
+    color: #6b3fa0;
+    border-left: 3px solid var(--purple-deep);
+    padding-left: 0.7rem;
+    margin-bottom: 1.2rem;
+  }
+  .btn-te{
+    font-family: 'Fredoka', sans-serif;
+    background: var(--purple-deep);
+    border: none;
+    color: #fff;
+    font-weight: 600;
+    border-radius: 100px;
+    padding: 0.6rem 1.2rem;
+    margin-top: auto;
+    transition: transform 0.2s ease;
+  }
+  .btn-te:hover{ transform: scale(1.05); color: #fff; }
+
+  .sticker-accent{
+    position: absolute;
+    width: 54px;
+    height: 54px;
+    object-fit: contain;
+    top: 8px;
+    right: 8px;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+    border-radius: 12px;
+    background: rgba(255,255,255,0.5);
+    padding: 4px;
+  }
+
+  .mascota{
+    position: fixed;
+    width: 70px;
+    height: 70px;
+    object-fit: contain;
+    z-index: 1;
+    opacity: 0.9;
+    pointer-events: none;
+    filter: drop-shadow(0 6px 14px rgba(120,90,160,0.25));
+    animation: float 9s ease-in-out infinite;
+  }
+  .mascota-1{ top: 12%; right: 8%; animation-delay: 0.5s; }
+  .mascota-2{ bottom: 10%; left: 7%; width: 58px; height: 58px; animation-delay: 2.5s; }
+
+  @media (max-width: 767px){
+    .mascota{ width: 46px; height: 46px; opacity: 0.7; }
+    .mascota-2{ width: 40px; height: 40px; }
+  }
+
+  footer.sign{
+    text-align: center;
+    color: #786f8a;
+    font-size: 0.85rem;
+    margin-top: 1.5rem;
+  }
+</style>
+</head>
+<body>
+
+<!-- Burbujas decorativas -->
+<div class="bubble" style="width:120px;height:120px;background:var(--pink);top:8%;left:6%;"></div>
+<div class="bubble" style="width:80px;height:80px;background:var(--blue);top:65%;left:85%;animation-delay:2s;"></div>
+<div class="bubble" style="width:100px;height:100px;background:var(--purple);top:80%;left:12%;animation-delay:4s;"></div>
+<div class="bubble" style="width:60px;height:60px;background:var(--pink);top:20%;left:88%;animation-delay:1s;"></div>
+
+<!-- Mascotas flotantes -->
+<img src="Joelly/sticker-cara.jpg" alt="" class="mascota mascota-1">
+<img src="Joelly/sticker-peek.jpg" alt="" class="mascota mascota-2">
+
+<!-- ================= HERO ================= -->
+<section id="hero">
+  <span class="eyebrow">Botiquín de Emergencia • Uso exclusivo de Joelly</span>
+  <h1 class="hero-title">¡Hola, Pequeña Gigante! 😽</h1>
+  <p class="hero-sub">
+    Aquí tienes un kit de primeros auxilios para cuando el día se porte mal contigo.
+    Sin receta médica, solo mucho cariño (y algo de pollo frito). 😚
+  </p>
+  <button class="btn-open" id="openBtn">Abrir Botiquín de Sonrisas 🚨</button>
+</section>
+
+<!-- ================= BOTIQUÍN ================= -->
+<section id="botiquin" class="container">
+  <h2 class="botiquin-title">Botiquín de Emergencia para Sonrisas 🩹</h2>
+  <p class="botiquin-sub">Elige tu dosis. Efectos secundarios: risa incontrolable.</p>
+
+  <div class="row g-4">
+
+    <!-- CARD 1: TERAPIA MIKA -->
+    <div class="col-12 col-md-4">
+      <div class="glass-card">
+        <span class="card-tag tag-mika">Terapia felina</span>
+        <h3>Terapia Mika 🐾</h3>
+        <p>Cuando nada más funcione, un poco de Mika siempre ayuda. Es científicamente comprobado (por mí, ahora mismo).</p>
+
+        <div class="mika-frame" id="mikaFrame">
+          <img id="mikaImg" src="Joelly/mika-seria.jpg" alt="Mika, la gata de Joelly">
+        </div>
+
+        <button class="btn-mika" id="mikaBtn">Ronroneo de emergencia 😻</button>
+      </div>
+    </div>
+
+    <!-- CARD 2: EMERGENCIA POLLO -->
+    <div class="col-12 col-md-4">
+      <div class="glass-card">
+        <span class="card-tag tag-pollo">Nivel: antojo crítico</span>
+        <h3>Emergencia Pollo 🍗💐</h3>
+        <p>Un ramo especialmente diseñado para Pollo Lovers certificadas. No se marchita, no necesita agua, solo cariño.</p>
+
+        <div class="pollo-stage" id="polloStage">
+          <img class="sticker-accent" src="Joelly/sticker-bouquet.jpg" alt="Gatito con ramo">
+          <div class="bouquet">
+            <span>🍗</span><span>🍗</span><span>💐</span><span>🍗</span>
+          </div>
+          <div class="nom-pop" id="nomPop">¡Ñam!</div>
+        </div>
+
+        <button class="btn-pollo" id="polloBtn">Morder 😋</button>
+      </div>
+    </div>
+
+    <!-- CARD 3: EL TECITO PENDIENTE -->
+    <div class="col-12 col-md-4">
+      <div class="glass-card">
+        <span class="card-tag tag-te">Vale pendiente</span>
+        <h3>El Tecito Pendiente ☕</h3>
+        <p class="te-note">"Un día de estos salimos a tomar el té" — dicho unas 300 veces y contando.</p>
+
+        <div class="te-stage">
+          <img class="sticker-accent" src="Joelly/sticker-pareja.jpg" alt="Gatitos acurrucados">
+          <span>🍵</span>
+          <span class="steam">〜</span>
+        </div>
+
+        <button class="btn-te" id="teBtn">Reclamar vale ✨</button>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="sign">hecho con 😽😚 para la pequeña gigante</footer>
+</section>
+
+<script>
+  // ---------- Transición Hero -> Botiquín ----------
+  const hero = document.getElementById('hero');
+  const botiquin = document.getElementById('botiquin');
+  const openBtn = document.getElementById('openBtn');
+
+  openBtn.addEventListener('click', () => {
+    hero.classList.add('hide');
+    botiquin.classList.add('show');
+    // pequeño delay para permitir la transición de opacidad
+    requestAnimationFrame(() => {
+      setTimeout(() => botiquin.classList.add('reveal'), 30);
+    });
+  });
+
+  // ---------- Card 1: Terapia Mika ----------
+  const mikaBtn = document.getElementById('mikaBtn');
+  const mikaImg = document.getElementById('mikaImg');
+
+  const fotosMika = ['Joelly/mika-seria.jpg', 'Joelly/mika-feliz.jpg'];
+  let mikaIndex = 0;
+
+  const frasesMika = [
+    "Mika ha emitido un ronroneo de nivel crítico. Sonrisa obligatoria. 😻",
+    "Alerta: exceso de ternura felina detectado en el área. 🐱",
+    "Mika autoriza oficialmente que dejes de estresarte por hoy.",
+    "Se ha activado el protocolo 'chaqueta rosa'. Procede con cautela y mucho cariño."
+  ];
+
+  mikaBtn.addEventListener('click', () => {
+    mikaIndex = (mikaIndex + 1) % fotosMika.length;
+    mikaImg.src = fotosMika[mikaIndex];
+    const frase = frasesMika[Math.floor(Math.random() * frasesMika.length)];
+    alert(frase);
+  });
+
+  // ---------- Card 2: Emergencia Pollo ----------
+  const polloBtn = document.getElementById('polloBtn');
+  const polloStage = document.getElementById('polloStage');
+  const nomPop = document.getElementById('nomPop');
+
+  polloBtn.addEventListener('click', () => {
+    polloStage.classList.remove('bitten');
+    nomPop.classList.remove('pop');
+    void polloStage.offsetWidth; // reinicia la animación
+    polloStage.classList.add('bitten');
+    nomPop.classList.add('pop');
+  });
+
+  // ---------- Card 3: El Tecito Pendiente ----------
+  const teBtn = document.getElementById('teBtn');
+
+  teBtn.addEventListener('click', () => {
+    const duration = 1.2 * 1000;
+    const end = Date.now() + duration;
+    const colors = ['#ffc9e3', '#d9c6ff', '#c2ecff', '#221f2b'];
+
+    (function frame() {
+      confetti({
+        particleCount: 4,
+        angle: 60,
+        spread: 60,
+        origin: { x: 0 },
+        colors: colors
+      });
+      confetti({
+        particleCount: 4,
+        angle: 120,
+        spread: 60,
+        origin: { x: 1 },
+        colors: colors
+      });
+      if (Date.now() < end) requestAnimationFrame(frame);
+    })();
+
+    confetti({
+      particleCount: 120,
+      spread: 100,
+      origin: { y: 0.6 },
+      colors: colors
+    });
+
+    teBtn.textContent = 'Vale reclamado ☕✔';
+    teBtn.disabled = true;
+  });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
